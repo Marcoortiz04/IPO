@@ -1,0 +1,437 @@
+/* VARIABLES DE TEMA (MODO CLARO POR DEFECTO) */
+:root {
+    --bg-color: #f7f4ef;
+    --card-bg: #fffdf9;
+    --border-color: #e2d9cc;
+    --text-main: #2c2c2c;
+    --text-title: #4a2e1b;
+    --text-muted: #7a6a58;
+    --item-bg: #f9f6f0;
+    --item-hover-bg: #4a2e1b;
+    --item-hover-text: #fffdf9;
+    --input-bg: #ffffff;
+    --shadow: rgba(0, 0, 0, 0.06);
+    --tooltip-bg: #2c2c2c;
+    --tooltip-text: #ffffff;
+    --reader-font-family: 'Georgia', serif;
+}
+
+/* TEMA OSCURO */
+[data-theme="dark"] {
+    --bg-color: #1a1a1a;
+    --card-bg: #242424;
+    --border-color: #3d3d3d;
+    --text-main: #e0e0e0;
+    --text-title: #d4a373;
+    --text-muted: #a0a0a0;
+    --item-bg: #2d2d2d;
+    --item-hover-bg: #d4a373;
+    --item-hover-text: #1a1a1a;
+    --input-bg: #2d2d2d;
+    --shadow: rgba(0, 0, 0, 0.4);
+    --tooltip-bg: #e0e0e0;
+    --tooltip-text: #1a1a1a;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* CURSOR PERSONALIZADO DE PLUMA (PUNTA ACTIVA EN LAS COORDENADAS 0 24) */
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    padding: 30px 20px;
+}
+
+/* CURSOR PARA ELEMENTOS INTERACTIVOS */
+button, select, input, .bookmark-item, .soneto-author {
+    cursor: pointer !important;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+header h1 {
+    font-size: 2.2rem;
+    color: var(--text-title);
+    font-family: 'Georgia', serif;
+}
+
+/* BARRA SUPERIOR DE HERRAMIENTAS */
+.toolbar {
+    max-width: 1200px;
+    margin: 0 auto 25px auto;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 15px 20px;
+    box-shadow: 0 4px 10px var(--shadow);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.search-box {
+    flex: 1;
+    min-width: 220px;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 9px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: var(--input-bg);
+    color: var(--text-main);
+    font-size: 0.95rem;
+    outline: none;
+}
+
+.search-box input:focus {
+    border-color: var(--text-title);
+}
+
+.controls-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* SELECTORES DE HERRAMIENTAS */
+.custom-select select {
+    background: var(--item-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    outline: none;
+}
+
+/* SLIDER DE TAMAÑO DE FUENTE */
+.font-slider-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--item-bg);
+    border: 1px solid var(--border-color);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+.font-slider-container label {
+    font-weight: bold;
+    color: var(--text-title);
+    user-select: none;
+}
+
+.font-slider-container input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 90px;
+    height: 6px;
+    background: var(--border-color);
+    border-radius: 3px;
+    outline: none;
+}
+
+.font-slider-container input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--text-title);
+    transition: transform 0.1s ease;
+}
+
+.font-slider-container input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+.font-value-display {
+    min-width: 35px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: bold;
+}
+
+/* BOTÓN MODO CLARO / OSCURO */
+.theme-toggle-btn {
+    background: var(--item-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-weight: bold;
+}
+
+.theme-toggle-btn:hover {
+    background-color: var(--border-color);
+}
+
+/* DISEÑO PRINCIPAL (TRES COLUMNAS EN ESCRITORIO) */
+.reader-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr 280px;
+    gap: 25px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* MARCADOR DE TÍTULOS (IZQUIERDA) */
+.bookmark-menu {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 10px var(--shadow);
+    height: fit-content;
+}
+
+.bookmark-menu h2 {
+    font-size: 1.2rem;
+    color: var(--text-title);
+    margin-bottom: 15px;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 5px;
+    font-family: 'Georgia', serif;
+}
+
+.bookmark-list {
+    list-style: none;
+}
+
+.bookmark-item {
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    border-radius: 6px;
+    background-color: var(--item-bg);
+    color: var(--text-main);
+    font-weight: bold;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.bookmark-item:hover, .bookmark-item.active {
+    background-color: var(--item-hover-bg);
+    color: var(--item-hover-text);
+}
+
+.bookmark-item.hidden {
+    display: none;
+}
+
+/* VISOR DEL SONETO (CENTRO) */
+.sonnet-display {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 40px;
+    box-shadow: 0 4px 15px var(--shadow);
+    min-height: 420px;
+}
+
+.soneto-header {
+    text-align: center;
+    margin-bottom: 25px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 15px;
+}
+
+.soneto-title {
+    font-size: 1.8rem;
+    color: var(--text-title);
+    margin-bottom: 5px;
+    font-family: 'Georgia', serif;
+}
+
+/* ESTILO INTERACTIVO PARA EL AUTOR */
+.soneto-author {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    font-style: italic;
+    display: inline-block;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color 0.2s ease, transform 0.1s ease;
+}
+
+.soneto-author:hover {
+    color: var(--text-title);
+    transform: scale(1.03);
+}
+
+/* PANEL DE CONTROL DE AUDIO (DERECHA) */
+.audio-sidebar {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 10px var(--shadow);
+    height: fit-content;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.audio-sidebar h2 {
+    font-size: 1.2rem;
+    color: var(--text-title);
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 5px;
+    font-family: 'Georgia', serif;
+}
+
+.audio-controls-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.player-btn {
+    background: var(--item-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-title);
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.player-btn:hover {
+    background-color: var(--item-hover-bg);
+    color: var(--item-hover-text);
+}
+
+.audio-control-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.audio-select-block {
+    width: 100%;
+    background: var(--item-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-title);
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    outline: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.audio-progress-block {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 5px;
+}
+
+.time-labels-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-family: monospace;
+    font-weight: 600;
+}
+
+.audio-slider {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: var(--border-color);
+    border-radius: 3px;
+    outline: none;
+}
+
+.audio-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: var(--text-title);
+    transition: transform 0.1s ease;
+}
+
+.audio-slider::-webkit-slider-thumb:hover {
+    transform: scale(1.3);
+}
+
+/* CUERPO DEL SONETO CON FUENTE DINÁMICA */
+.soneto-body {
+    line-height: 1.8;
+    color: var(--text-main);
+    white-space: pre-wrap;
+    text-align: center;
+    font-family: var(--reader-font-family);
+}
+
+.placeholder-text {
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: center;
+    margin-top: 140px;
+}
+
+/* TOOLTIP DINÁMICO QUE SIGUE AL CURSOR */
+.cursor-tooltip {
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: var(--tooltip-bg);
+    color: var(--tooltip-text);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.15s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    z-index: 9999;
+    white-space: nowrap;
+}
+
+.cursor-tooltip.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+@media (max-width: 992px) {
+    .reader-layout { grid-template-columns: 240px 1fr; }
+    .audio-sidebar { grid-column: span 2; }
+}
+
+@media (max-width: 768px) {
+    .reader-layout { grid-template-columns: 1fr; }
+    .audio-sidebar { grid-column: span 1; }
+    .toolbar { flex-direction: column; align-items: stretch; }
+    .controls-group { justify-content: space-between; }
+}
