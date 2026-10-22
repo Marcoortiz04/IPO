@@ -115,7 +115,7 @@ class BoardModel {
       const row = this.board[r];
       const firstType = row[0] ? row[0].type : null;
       if (firstType && row.every(cell => cell && cell.type === firstType)) {
-        return true; // Si alguna fila sale completa por casualidad, re-barajar
+        return true;
       }
     }
     return false;
@@ -364,18 +364,25 @@ class BoardController {
       document.body.setAttribute('data-theme-mode', e.target.value);
     });
 
-    document.getElementById('btnNewGame').addEventListener('click', () => {
-      this.resetGame();
-    });
-
+    // Modales
     document.getElementById('btnHelp').addEventListener('click', () => {
       this.view.toggleModal(this.view.helpModal, true);
     });
 
+    // Botones para cerrar ventanas modales
     document.querySelectorAll('[data-action="close-modal"]').forEach(btn => {
       btn.addEventListener('click', () => {
         this.view.toggleModal(this.view.helpModal, false);
         this.view.toggleModal(this.view.winModal, false);
+      });
+    });
+
+    // BOTÓN DE NUEVA PARTIDA (Panel lateral y cartel de victoria)
+    document.querySelectorAll('[data-action="new-game"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.view.toggleModal(this.view.helpModal, false);
+        this.view.toggleModal(this.view.winModal, false);
+        this.resetGame();
       });
     });
 
