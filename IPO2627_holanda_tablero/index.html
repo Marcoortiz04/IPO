@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proyecto Tablero - Juego de Fichas NxN</title>
+  <link rel="stylesheet" href="estilo.css">
+</head>
+<body data-theme-mode="dark">
+
+  <header>
+    <h1>Proyecto Tablero</h1>
+    <p>Intercambia fichas para completar filas de un mismo tipo</p>
+  </header>
+
+  <div class="main-container">
+    <!-- PANEL DE CONTROLES -->
+    <aside class="controls-panel">
+      <div class="control-group">
+        <label for="gameMode">Modo de Juego</label>
+        <select id="gameMode" data-control="mode">
+          <option value="1">1 Jugador (Solitario)</option>
+          <option value="2">2 Jugadores</option>
+          <option value="3">3 Jugadores</option>
+          <option value="4">4 Jugadores</option>
+        </select>
+      </div>
+
+      <!-- MARCADOR (Solo visible en modo Multijugador) -->
+      <div class="control-group" id="scoreSection" style="display: none;">
+        <label>Jugadores / Marcador</label>
+        <div id="playersList" class="players-container"></div>
+      </div>
+
+      <!-- TAMAÑO PERSONALIZABLE (N x N) -->
+      <div class="control-group">
+        <label for="boardSizeInput">Dimensión del Tablero (N x N)</label>
+        <div class="custom-size-wrapper">
+          <input type="number" id="boardSizeInput" min="2" max="15" value="3" placeholder="Tamaño N">
+          <button id="btnApplySize" class="btn-secondary" style="white-space: nowrap;">Aplicar N</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label for="pieceSize">Escala Visual</label>
+        <select id="pieceSize" data-control="size">
+          <option value="small">Pequeño</option>
+          <option value="medium" selected>Medio</option>
+          <option value="large">Grande</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label for="pieceTheme">Aspecto de Fichas</label>
+        <select id="pieceTheme" data-control="theme">
+          <option value="shapes">Formas Geométricas</option>
+          <option value="neon">Neón Glow</option>
+          <option value="symbols">Símbolos</option>
+        </select>
+      </div>
+
+      <!-- TEMA DE INTERFAZ (CLARO / OSCURO) -->
+      <div class="control-group">
+        <label for="colorModeSelect">Apariencia Visual</label>
+        <select id="colorModeSelect">
+          <option value="dark" selected>Modo Oscuro</option>
+          <option value="light">Modo Claro</option>
+        </select>
+      </div>
+
+      <button id="btnNewGame" class="btn-primary" data-action="new-game">Nueva Partida</button>
+      <button id="btnHelp" class="btn-secondary" data-action="help">Mecánica del Juego</button>
+    </aside>
+
+    <!-- ÁREA DEL TABLERO -->
+    <main class="board-wrapper">
+      <div id="turnBanner" class="turn-banner" style="display: none;">
+        <span id="turnDot" class="turn-indicator-dot"></span>
+        <span id="turnText">Turno de Jugador 1</span>
+      </div>
+
+      <section class="board-container">
+        <div id="board" class="board-grid" data-theme="shapes" data-piece-size="medium">
+          <!-- Celdas renderizadas dinámicamente -->
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODAL DE AYUDA -->
+  <div id="helpModal" class="modal-overlay">
+    <div class="modal-content">
+      <button class="close-btn" data-action="close-modal">&times;</button>
+      <h2>Mecánica del Juego</h2>
+      <p>Reglas y funcionamiento:</p>
+      <ul>
+        <li><strong>Movimiento:</strong> Arrastra una ficha y suéltala sobre otra para intercambiar sus posiciones.</li>
+        <li><strong>Inicio Limpio:</strong> Ninguna fila comienza completada al iniciar o reiniciar la partida[cite: 1].</li>
+        <li><strong>Sin Elementos Sueltos:</strong> Las fichas se distribuyen en múltiplos exactos de N para garantizar que todas las filas puedan completarse[cite: 1].</li>
+        <li><strong>Fila Completada:</strong> Una vez que una fila se completa con fichas idénticas, queda bloqueada permanentemente y ya no se puede mover ni recibir nuevas fichas[cite: 1].</li>
+        <li><strong>Modo Claro/Oscuro:</strong> Puedes alternar la apariencia de la interfaz desde el panel de control lateral[cite: 1].</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- MODAL DE VICTORIA -->
+  <div id="winModal" class="modal-overlay">
+    <div class="modal-content" style="text-align: center;">
+      <button class="close-btn" data-action="close-modal">&times;</button>
+      <h2>¡Partida Finalizada! 🎉</h2>
+      <p id="winMessage">¡Has completado el tablero!</p>
+      <button class="btn-primary" data-action="new-game" style="margin-top: 15px;">Nueva Partida</button>
+    </div>
+  </div>
+
+  <!-- ARCHIVO JAVASCRIPT EXTERNO -->
+  <script src="archivo.js"></script>
+</body>
+</html>
