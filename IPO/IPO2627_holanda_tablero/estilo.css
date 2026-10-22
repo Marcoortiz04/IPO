@@ -1,0 +1,468 @@
+/* ==========================================================================
+   1. VARIABLES CSS (Modo Oscuro por defecto y Modo Claro)
+   ========================================================================== */
+:root {
+  /* Por defecto: Modo Oscuro */
+  --primary-color: #3b82f6;
+  --primary-hover: #2563eb;
+  --bg-color: #0f172a;
+  --card-bg: #1e293b;
+  --board-bg: #0f172a;
+  --cell-bg: #334155;
+  --cell-hover: #475569;
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --border-color: #475569;
+  --input-bg: #0f172a;
+  --border-radius: 12px;
+
+  /* Colores de Jugadores */
+  --p1-color: #ef4444;
+  --p2-color: #3b82f6;
+  --p3-color: #10b981;
+  --p4-color: #f59e0b;
+
+  /* Tipografía */
+  --font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* Fichas - Colores base */
+  --piece-type1: #ef4444;
+  --piece-type2: #10b981;
+  --piece-type3: #3b82f6;
+
+  /* Tamaños por defecto */
+  --piece-size: 56px;
+  --grid-gap: 10px;
+}
+
+/* Variables para el Modo Claro */
+body[data-theme-mode="light"] {
+  --primary-color: #2563eb;
+  --primary-hover: #1d4ed8;
+  --bg-color: #f1f5f9;
+  --card-bg: #ffffff;
+  --board-bg: #f1f5f9;
+  --cell-bg: #e2e8f0;
+  --cell-hover: #cbd5e1;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --border-color: #cbd5e1;
+  --input-bg: #f8fafc;
+}
+
+/* Modificadores de tamaño de ficha */
+[data-piece-size="small"] { --piece-size: 38px; --grid-gap: 6px; }
+[data-piece-size="medium"] { --piece-size: 56px; --grid-gap: 10px; }
+[data-piece-size="large"] { --piece-size: 72px; --grid-gap: 14px; }
+
+/* ==========================================================================
+   2. RESETS Y ESTRUCTURA GLOBAL
+   ========================================================================== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+header h1 {
+  font-size: 2.2rem;
+  margin-bottom: 6px;
+  background: linear-gradient(135deg, #60a5fa, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+header p {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+.main-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 30px;
+  justify-content: center;
+  align-items: flex-start;
+  max-width: 1200px;
+  width: 100%;
+}
+
+/* ==========================================================================
+   3. PANEL DE CONTROLES
+   ========================================================================== */
+.controls-panel {
+  background-color: var(--card-bg);
+  padding: 24px;
+  border-radius: var(--border-radius);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 320px;
+  border: 1px solid var(--border-color);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.control-group label {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+select, input[type="number"], button {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background-color: var(--input-bg);
+  color: var(--text-main);
+  font-size: 0.95rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+select:focus, input[type="number"]:focus {
+  border-color: var(--primary-color);
+}
+
+.custom-size-wrapper {
+  display: flex;
+  gap: 8px;
+}
+
+.custom-size-wrapper input {
+  width: 100%;
+}
+
+button.btn-primary {
+  background-color: var(--primary-color);
+  color: #ffffff;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+button.btn-primary:hover {
+  background-color: var(--primary-hover);
+}
+
+button.btn-secondary {
+  background-color: transparent;
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button.btn-secondary:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+/* ==========================================================================
+   4. MARCADOR Y JUGADORES
+   ========================================================================== */
+.players-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background-color: var(--bg-color);
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.player-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-left: 4px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.player-card[data-player="1"] { border-left-color: var(--p1-color); }
+.player-card[data-player="2"] { border-left-color: var(--p2-color); }
+.player-card[data-player="3"] { border-left-color: var(--p3-color); }
+.player-card[data-player="4"] { border-left-color: var(--p4-color); }
+
+.player-card.active {
+  background: var(--cell-bg);
+  transform: scale(1.02);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.player-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.player-score {
+  font-weight: 700;
+  background: var(--input-bg);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+}
+
+/* ==========================================================================
+   5. ÁREA DE JUEGO Y TABLERO
+   ========================================================================== */
+.board-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.turn-banner {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  padding: 10px 20px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.turn-indicator-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--p1-color);
+}
+
+.board-container {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  padding: 20px;
+  border-radius: var(--border-radius);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+  max-width: 90vw;
+  overflow: auto;
+}
+
+.board-grid {
+  display: grid;
+  gap: var(--grid-gap);
+  justify-content: center;
+  align-content: center;
+}
+
+/* Celda del tablero */
+.cell {
+  width: var(--piece-size);
+  height: var(--piece-size);
+  background-color: var(--cell-bg);
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.cell.drag-over {
+  background-color: var(--cell-hover);
+  transform: scale(1.05);
+  border: 2px dashed var(--primary-color);
+}
+
+/* ==========================================================================
+   6. FICHAS (Aspecto visual y Temas)
+   ========================================================================== */
+.piece {
+  width: 80%;
+  height: 80%;
+  cursor: grab;
+  user-select: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  font-size: calc(var(--piece-size) * 0.35);
+  transition: transform 0.15s, opacity 0.15s;
+}
+
+.piece:active {
+  cursor: grabbing;
+}
+
+.piece.dragging {
+  opacity: 0.3;
+}
+
+/* Tema: Formas Geométricas */
+[data-theme="shapes"] .piece[data-type="1"] {
+  background-color: var(--piece-type1);
+  border-radius: 50%;
+}
+[data-theme="shapes"] .piece[data-type="2"] {
+  background-color: var(--piece-type2);
+  border-radius: 6px;
+}
+[data-theme="shapes"] .piece[data-type="3"] {
+  background-color: transparent !important;
+  border-radius: 0;
+}
+[data-theme="shapes"] .piece[data-type="3"] svg {
+  width: 100%;
+  height: 100%;
+  fill: var(--piece-type3);
+  filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.3));
+}
+
+/* Tema: Neón */
+[data-theme="neon"] .piece[data-type="1"] {
+  border: 3px solid #ff0055;
+  box-shadow: 0 0 10px #ff0055, inset 0 0 10px #ff0055;
+  border-radius: 50%;
+}
+[data-theme="neon"] .piece[data-type="2"] {
+  border: 3px solid #00ffcc;
+  box-shadow: 0 0 10px #00ffcc, inset 0 0 10px #00ffcc;
+  border-radius: 4px;
+}
+[data-theme="neon"] .piece[data-type="3"] {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+[data-theme="neon"] .piece[data-type="3"] svg {
+  width: 100%;
+  height: 100%;
+  fill: rgba(255, 204, 0, 0.2);
+  stroke: #ffcc00;
+  stroke-width: 3px;
+  filter: drop-shadow(0 0 8px #ffcc00);
+}
+
+/* Tema: Símbolos */
+[data-theme="symbols"] .piece {
+  border-radius: 50%;
+  background-color: var(--cell-hover);
+}
+[data-theme="symbols"] .piece[data-type="1"]::after { content: "★"; color: #f59e0b; }
+[data-theme="symbols"] .piece[data-type="2"]::after { content: "◆"; color: #10b981; }
+[data-theme="symbols"] .piece[data-type="3"]::after { content: "●"; color: #ef4444; }
+
+/* ==========================================================================
+   7. FILAS COMPLETADAS Y BLOQUEADAS
+   ========================================================================== */
+.cell.row-completed {
+  background-color: var(--card-bg) !important;
+  border: 1px solid #10b981;
+  box-shadow: inset 0 0 8px rgba(16, 185, 129, 0.3);
+  position: relative;
+}
+
+.cell.row-completed::after {
+  content: '✓';
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: 0.7rem;
+  color: #10b981;
+  font-weight: bold;
+  pointer-events: none;
+}
+
+.cell.row-completed .piece {
+  cursor: not-allowed !important;
+  opacity: 0.85;
+}
+
+/* ==========================================================================
+   8. MODALES Y ASISTENCIA
+   ========================================================================== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-content {
+  background-color: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: 30px;
+  max-width: 480px;
+  width: 90%;
+  position: relative;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+.modal-content h2 {
+  margin-bottom: 14px;
+  color: var(--primary-color);
+}
+
+.modal-content p, .modal-content ul {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.modal-content ul {
+  padding-left: 20px;
+}
+
+.close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+
+.close-btn:hover {
+  color: var(--text-main);
+}

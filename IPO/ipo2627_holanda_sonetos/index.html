@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lector de Sonetos</title>
+
+    <!-- VÍNCULO AL ARCHIVO DE ESTILOS EXTERNO -->
+    <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+
+    <div id="cursorTooltip" class="cursor-tooltip"></div>
+
+    <header>
+        <h1>Lector de Sonetos</h1>
+    </header>
+
+    <!-- BARRA SUPERIOR DE HERRAMIENTAS -->
+    <div class="toolbar">
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Buscar por título o autor..." oninput="filtrarSonetos()" aria-label="Buscar sonetos">
+        </div>
+
+        <div class="controls-group">
+            <!-- SELECTOR DE TIPOGRAFÍA -->
+            <div class="custom-select">
+                <select id="fontSelect" onchange="cambiarTipoFuente(this.value)" aria-label="Seleccionar tipografía">
+                    <option value="'Georgia', serif">Georgia (Clásica)</option>
+                    <option value="'Garamond', serif">Garamond (Elegante)</option>
+                    <option value="'Courier New', monospace">Courier (Mecanografía)</option>
+                    <option value="'Segoe UI', sans-serif">Segoe UI (Moderna)</option>
+                    <option value="'Comic Sans MS', cursive">Comic Sans (Informal)</option>
+                </select>
+            </div>
+
+            <!-- SLIDER DE TAMAÑO DE FUENTE -->
+            <div class="font-slider-container">
+                <label for="fontSizeRange">A</label>
+                <input 
+                    type="range" 
+                    id="fontSizeRange" 
+                    min="12" 
+                    max="32" 
+                    value="18" 
+                    step="1" 
+                    oninput="actualizarTamanoFuente(this.value)"
+                    aria-label="Ajustar tamaño de fuente"
+                >
+                <span class="font-value-display" id="fontSizeLabel">18px</span>
+            </div>
+
+            <button class="theme-toggle-btn" id="themeBtn" onclick="toggleTema()" aria-label="Cambiar tema">🌙 Oscuro</button>
+        </div>
+    </div>
+
+    <!-- PANEL PRINCIPAL (TRES COLUMNAS) -->
+    <div class="reader-layout">
+        <!-- MARCADOR (IZQUIERDA) -->
+        <aside class="bookmark-menu">
+            <h2>Marcador</h2>
+            <ul class="bookmark-list" id="bookmarkList"></ul>
+        </aside>
+
+        <!-- VISOR DEL SONETO (CENTRO) -->
+        <main class="sonnet-display" id="sonnetDisplay">
+            <p class="placeholder-text">Selecciona un soneto del marcador...</p>
+        </main>
+
+        <!-- CONTROLES DE AUDIO (DERECHA) -->
+        <aside class="audio-sidebar">
+            <h2>Audio</h2>
+            <div class="audio-controls-stack">
+                <button class="player-btn" id="playBtn" onclick="togglePlayPause()">▶️ Reproducir</button>
+                <button class="player-btn" onclick="reiniciarAudio()">🔄 Reiniciar</button>
+
+                <div>
+                    <div class="audio-control-label">Voz:</div>
+                    <select class="audio-select-block" id="sidebarVoiceSelect" onchange="cambiarVoz(this.value)" aria-label="Seleccionar voz de lectura">
+                        <option value="">Cargando voces...</option>
+                    </select>
+                </div>
+
+                <div>
+                    <div class="audio-control-label">Velocidad:</div>
+                    <select class="audio-select-block" id="sidebarRateSelect" onchange="cambiarVelocidad(this.value)" aria-label="Velocidad de reproducción">
+                        <option value="0.25">x0.25</option>
+                        <option value="0.50">x0.50</option>
+                        <option value="0.75">x0.75</option>
+                        <option value="1.00" selected>x1.00 (Normal)</option>
+                        <option value="1.25">x1.25</option>
+                        <option value="1.50">x1.50</option>
+                        <option value="1.75">x1.75</option>
+                        <option value="2.00">x2.00</option>
+                    </select>
+                </div>
+
+                <div class="audio-progress-block">
+                    <div class="time-labels-row">
+                        <span id="currentTimeLabel">00:00</span>
+                        <span id="maxTimeLabel">00:00</span>
+                    </div>
+                    <input 
+                        type="range" 
+                        class="audio-slider" 
+                        id="audioScrubber" 
+                        min="0" 
+                        max="100" 
+                        value="0" 
+                        step="0.1"
+                        onmousedown="alIniciarArrastre()"
+                        onmouseup="alFinalizarArrastre(this.value)"
+                        oninput="alArrastrarBarra(this.value)"
+                    >
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        const bookmarkList = document.getElementById('bookmarkList');
+        const sonnetDisplay = document.getElementById('sonnetDisplay');
+        const tooltip = document.getElementById('cursorTooltip');
+        const sidebarVoiceSelect = document.getElementById('sidebarVoiceSelect');
+        const sidebarRateSelect = document.getElementById('sidebarRateSelect');
+        
+        let tamanoFuentePixels = localStorage.getItem('fontSize') || 18;
+        let tipoFuenteActual = localStorage.getItem('fontFamily') || "'Georgia', serif";
+        let velocidadActual = parseFloat(localStorage.getItem('speechRate')) || 1.0;
+        let vocesDisponibles = [];
+
+        // REPRODUCTOR Y CONTROL DE TIEMPO FLUIDO
+        let synth = window.speechSynthesis;
+        let utteranceActual = null;
+        let textoCompletoSoneto = "";
+        
+        let tiempoTranscurrido = 0;
+        let duracionTotal = 0;
+        let timerInterval = null;
+        let reproductoActivo = false;
+        let estaPausado = false;
+        let arrastrandoBarra = false;
+
+        function cargarVoces() {
+            if (!synth) return;
+
+            const todasLasVoces = synth.getVoices();
+            vocesDisponibles = todasLasVoces.filter(v => v.lang.startsWith('es'));
+
+            if (vocesDisponibles.length === 0) {
+                vocesDisponibles = todasLasVoces;
+            }
+
+            actualizarDesplegableVocesUI();
+        }
+
+        function actualizarDesplegableVocesUI() {
+            if (!sidebarVoiceSelect) return;
+
+            sidebarVoiceSelect.innerHTML = '';
+
+            if (vocesDisponibles.length === 0) {
+                const opt = document.createElement('option');
+                opt.textContent = 'Voz por defecto';
+                sidebarVoiceSelect.appendChild(opt);
+                return;
+            }
+
+            const vozGuardada = localStorage.getItem('selectedVoiceIndex');
+
+            vocesDisponibles.forEach((voz, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `${voz.name} (${voz.lang})`;
+                if (vozGuardada !== null && parseInt(vozGuardada, 10) === index) {
+                    option.selected = true;
+                }
+                sidebarVoiceSelect.appendChild(option);
+            });
+        }
+
+        if (synth) {
+            synth.onvoiceschanged = cargarVoces;
+            cargarVoces();
+        }
+
+        function cambiarVoz(indexVoz) {
+            localStorage.setItem('selectedVoiceIndex', indexVoz);
+            if (reproductoActivo) {
+                iniciarReproduccionDesde(tiempoTranscurrido);
+            }
+        }
+
+        // INICIALIZACIÓN DE PREFERENCIAS
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            document.getElementById('themeBtn').textContent = savedTheme === 'dark' ? '☀️ Claro' : '🌙 Oscuro';
+
+            document.getElementById('fontSizeRange').value = tamanoFuentePixels;
+            document.getElementById('fontSizeLabel').textContent = `${tamanoFuentePixels}px`;
+            
+            document.getElementById('fontSelect').value = tipoFuenteActual;
+            document.documentElement.style.setProperty('--reader-font-family', tipoFuenteActual);
+
+            sidebarRateSelect.value = velocidadActual.toFixed(2);
+        });
+
+        function cambiarVelocidad(nuevaVelocidad) {
+            velocidadActual = parseFloat(nuevaVelocidad);
+            localStorage.setItem('speechRate', nuevaVelocidad);
+
+            if (textoCompletoSoneto) {
+                duracionTotal = Math.max(1, Math.round((textoCompletoSoneto.length / 14) / velocidadActual));
+                const scrubber = document.getElementById('audioScrubber');
+                const labelMax = document.getElementById('maxTimeLabel');
+                if (scrubber) scrubber.max = duracionTotal;
+                if (labelMax) labelMax.textContent = formatearTiempo(duracionTotal);
+            }
+
+            if (reproductoActivo) {
+                iniciarReproduccionDesde(tiempoTranscurrido);
+            }
+        }
+
+        function formatearTiempo(segundos) {
+            const min = Math.floor(segundos / 60);
+            const seg = Math.floor(segundos % 60);
+            return `${min.toString().padStart(2, '0')}:${seg.toString().padStart(2, '0')}`;
+        }
+
+        // CARGA AUTOMÁTICA DE ARCHIVOS EN /sonetos
+        async function cargarTodosLosSonetos() {
+            try {
+                const response = await fetch('sonetos/');
+                if (!response.ok) throw new Error("No se pudo acceder a la carpeta sonetos/");
+
+                const htmlText = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(htmlText, 'text/html');
+                const enlaces = Array.from(doc.querySelectorAll('a'));
+
+                const archivosMd = enlaces
+                    .map(a => a.getAttribute('href'))
+                    .filter(href => href && href.toLowerCase().endsWith('.md'))
+                    .map(href => href.split('/').pop());
+
+                const listaArchivos = [...new Set(archivosMd)];
+
+                if (listaArchivos.length === 0) {
+                    sonnetDisplay.innerHTML = `<p class="placeholder-text">No se encontraron archivos .md en la carpeta sonetos/.</p>`;
+                    return;
+                }
+
+                bookmarkList.innerHTML = '';
+                sonnetDisplay.innerHTML = `<p class="placeholder-text">Selecciona un soneto del marcador...</p>`;
+
+                for (let i = 0; i < listaArchivos.length; i++) {
+                    const nombreArchivo = listaArchivos[i];
+
+                    try {
+                        const resSoneto = await fetch(`sonetos/${nombreArchivo}`);
+                        if (!resSoneto.ok) continue;
+
+                        const texto = await resSoneto.text();
+
+                        const tituloMatch = texto.match(/T[íi]tulo:\s*"?([^"\r\n]+)"?/i);
+                        const autorMatch = texto.match(/Autor:\s*"?([^"\r\n]+)"?/i);
+
+                        const titulo = tituloMatch ? tituloMatch[1].trim() : nombreArchivo.replace('.md', '');
+                        const autor = autorMatch ? autorMatch[1].trim() : 'Anónimo';
+
+                        const li = document.createElement('li');
+                        li.className = 'bookmark-item';
+                        li.textContent = titulo;
+                        li.tabIndex = 0;
+
+                        li.dataset.titulo = titulo.toLowerCase();
+                        li.dataset.autor = autor.toLowerCase();
+
+                        li.onmouseenter = () => {
+                            tooltip.textContent = `Autor: ${autor}`;
+                            tooltip.classList.add('visible');
+                        };
+
+                        li.onmousemove = (e) => {
+                            let x = e.clientX + 15;
+                            let y = e.clientY + 15;
+
+                            if (x + tooltip.offsetWidth > window.innerWidth) {
+                                x = e.clientX - tooltip.offsetWidth - 10;
+                            }
+                            if (y + tooltip.offsetHeight > window.innerHeight) {
+                                y = e.clientY - tooltip.offsetHeight - 10;
+                            }
+
+                            tooltip.style.transform = `translate(${x}px, ${y}px)`;
+                        };
+
+                        li.onmouseleave = () => {
+                            tooltip.classList.remove('visible');
+                        };
+
+                        const seleccionarSoneto = () => {
+                            detenerAudio();
+
+                            document.querySelectorAll('.bookmark-item').forEach(el => el.classList.remove('active'));
+                            li.classList.add('active');
+
+                            let cuerpoLimpio = texto
+                                .replace(/^T[íi]tulo:\s*.*$/gim, '')
+                                .replace(/^Autor:\s*.*$/gim, '')
+                                .replace(/^Soneto:?\s*$/gim, '')
+                                .replace(/[\r\n]{3,}/g, '\n\n')
+                                .trim();
+
+                            textoCompletoSoneto = `${titulo}, de ${autor}. \n\n ${cuerpoLimpio}`;
+                            
+                            duracionTotal = Math.max(1, Math.round((textoCompletoSoneto.length / 14) / velocidadActual));
+                            tiempoTranscurrido = 0;
+
+                            sonnetDisplay.innerHTML = '';
+
+                            const header = document.createElement('div');
+                            header.className = 'soneto-header';
+
+                            const h2 = document.createElement('h2');
+                            h2.className = 'soneto-title';
+                            h2.textContent = titulo;
+
+                            const divAutor = document.createElement('div');
+                            const spanAutor = document.createElement('span');
+                            spanAutor.className = 'soneto-author';
+                            spanAutor.textContent = autor;
+                            spanAutor.title = `Haz clic para ver todas las obras de ${autor}`;
+                            spanAutor.onclick = () => filtrarPorAutor(autor);
+                            divAutor.appendChild(spanAutor);
+
+                            header.appendChild(h2);
+                            header.appendChild(divAutor);
+
+                            const bodyDiv = document.createElement('div');
+                            bodyDiv.className = 'soneto-body';
+                            bodyDiv.id = 'sonnetBody';
+                            bodyDiv.style.fontSize = `${tamanoFuentePixels}px`;
+                            bodyDiv.textContent = cuerpoLimpio;
+
+                            sonnetDisplay.appendChild(header);
+                            sonnetDisplay.appendChild(bodyDiv);
+
+                            const scrubber = document.getElementById('audioScrubber');
+                            const labelMax = document.getElementById('maxTimeLabel');
+                            if (scrubber) scrubber.max = duracionTotal;
+                            if (labelMax) labelMax.textContent = formatearTiempo(duracionTotal);
+                            actualizarBarraUI();
+                        };
+
+                        li.onclick = seleccionarSoneto;
+                        li.onkeydown = (e) => { if (e.key === 'Enter') seleccionarSoneto(); };
+
+                        bookmarkList.appendChild(li);
+
+                    } catch (err) {
+                        console.error(`Error procesando ${nombreArchivo}:`, err);
+                    }
+                }
+
+            } catch (error) {
+                console.error("Error al acceder a la carpeta:", error);
+                sonnetDisplay.innerHTML = `
+                    <p style="color: #c0392b; font-weight: bold; text-align: center;">
+                        No se pudo leer la carpeta <code>sonetos/</code>.
+                    </p>
+                    <p style="text-align: center; font-size: 0.9rem; margin-top: 10px;">
+                        Asegúrate de ejecutar la web con un servidor local (p. ej. Live Server en VS Code).
+                    </p>
+                `;
+            }
+        }
+
+        function togglePlayPause() {
+            const btn = document.getElementById('playBtn');
+
+            if (!textoCompletoSoneto) return;
+
+            if (!reproductoActivo) {
+                iniciarReproduccionDesde(tiempoTranscurrido);
+            } else if (synth.speaking && !synth.paused) {
+                synth.pause();
+                estaPausado = true;
+                detenerReloj();
+                if (btn) btn.textContent = '▶️ Reanudar';
+            } else if (synth.paused) {
+                synth.resume();
+                estaPausado = false;
+                iniciarReloj();
+                if (btn) btn.textContent = '⏸️ Pausar';
+            }
+        }
+
+        function iniciarReproduccionDesde(segundosInicio) {
+            if (!synth || !textoCompletoSoneto) return;
+
+            synth.cancel();
+            detenerReloj();
+
+            reproductoActivo = true;
+            estaPausado = false;
+            tiempoTranscurrido = segundosInicio;
+
+            const btn = document.getElementById('playBtn');
+            if (btn) btn.textContent = '⏸️ Pausar';
+
+            const porcentajeInicial = segundosInicio / duracionTotal;
+            const indiceTexto = Math.floor(textoCompletoSoneto.length * porcentajeInicial);
+            const textoRestante = textoCompletoSoneto.substring(indiceTexto);
+
+            utteranceActual = new SpeechSynthesisUtterance(textoRestante);
+            utteranceActual.rate = velocidadActual;
+
+            if (sidebarVoiceSelect && sidebarVoiceSelect.value !== "") {
+                const selectedIndex = parseInt(sidebarVoiceSelect.value, 10);
+                if (vocesDisponibles[selectedIndex]) {
+                    utteranceActual.voice = vocesDisponibles[selectedIndex];
+                }
+            } else {
+                utteranceActual.lang = 'es-ES';
+            }
+
+            utteranceActual.onend = () => {
+                if (reproductoActivo && !estaPausado && !arrastrandoBarra) {
+                    reiniciarAudio();
+                }
+            };
+
+            synth.speak(utteranceActual);
+            iniciarReloj();
+        }
+
+        function iniciarReloj() {
+            detenerReloj();
+            timerInterval = setInterval(() => {
+                if (!estaPausado && !arrastrandoBarra) {
+                    tiempoTranscurrido += 0.1;
+                    if (tiempoTranscurrido >= duracionTotal) {
+                        tiempoTranscurrido = duracionTotal;
+                        actualizarBarraUI();
+                        reiniciarAudio();
+                    } else {
+                        actualizarBarraUI();
+                    }
+                }
+            }, 100);
+        }
+
+        function detenerReloj() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        function alIniciarArrastre() {
+            arrastrandoBarra = true;
+        }
+
+        function alArrastrarBarra(valorSec) {
+            tiempoTranscurrido = parseFloat(valorSec);
+            document.getElementById('currentTimeLabel').textContent = formatearTiempo(tiempoTranscurrido);
+        }
+
+        function alFinalizarArrastre(valorSec) {
+            arrastrandoBarra = false;
+            tiempoTranscurrido = parseFloat(valorSec);
+            actualizarBarraUI();
+
+            if (reproductoActivo) {
+                iniciarReproduccionDesde(tiempoTranscurrido);
+            }
+        }
+
+        function reiniciarAudio() {
+            detenerAudio();
+            tiempoTranscurrido = 0;
+            actualizarBarraUI();
+        }
+
+        function detenerAudio() {
+            if (synth) {
+                synth.cancel();
+            }
+            detenerReloj();
+            reproductoActivo = false;
+            estaPausado = false;
+            
+            const btn = document.getElementById('playBtn');
+            if (btn) btn.textContent = '▶️ Reproducir';
+        }
+
+        function actualizarBarraUI() {
+            const scrubber = document.getElementById('audioScrubber');
+            const labelCurrent = document.getElementById('currentTimeLabel');
+
+            if (scrubber && !arrastrandoBarra) {
+                scrubber.value = tiempoTranscurrido;
+            }
+            if (labelCurrent) {
+                labelCurrent.textContent = formatearTiempo(tiempoTranscurrido);
+            }
+        }
+
+        // FILTRADO GENERAL
+        function filtrarSonetos() {
+            detenerAudio();
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const items = document.querySelectorAll('.bookmark-item');
+
+            items.forEach(item => {
+                const titulo = item.dataset.titulo || '';
+                const autor = item.dataset.autor || '';
+
+                if (titulo.includes(query) || autor.includes(query)) {
+                    item.classList.remove('hidden');
+                } else {
+                    item.classList.add('hidden');
+                }
+            });
+        }
+
+        function filtrarPorAutor(nombreAutor) {
+            const searchInput = document.getElementById('searchInput');
+            searchInput.value = nombreAutor;
+            filtrarSonetos();
+            searchInput.focus();
+        }
+
+        function cambiarTipoFuente(nuevaFuente) {
+            tipoFuenteActual = nuevaFuente;
+            document.documentElement.style.setProperty('--reader-font-family', nuevaFuente);
+            localStorage.setItem('fontFamily', nuevaFuente);
+        }
+
+        function actualizarTamanoFuente(nuevoTamano) {
+            tamanoFuentePixels = nuevoTamano;
+            document.getElementById('fontSizeLabel').textContent = `${nuevoTamano}px`;
+            localStorage.setItem('fontSize', nuevoTamano);
+
+            const cuerpoSoneto = document.getElementById('sonnetBody');
+            if (cuerpoSoneto) {
+                cuerpoSoneto.style.fontSize = `${nuevoTamano}px`;
+            }
+        }
+
+        function toggleTema() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+
+            document.documentElement.setAttribute('data-theme', newTheme);
+            document.getElementById('themeBtn').textContent = newTheme === 'dark' ? '☀️ Claro' : '🌙 Oscuro';
+            localStorage.setItem('theme', newTheme);
+        }
+
+        cargarTodosLosSonetos();
+    </script>
+
+</body>
+</html>
